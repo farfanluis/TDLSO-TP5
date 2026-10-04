@@ -68,6 +68,16 @@ def filosofo(id, rondas=3):
         #
         # TODO: Adquiere los tenedores adyacentes de forma segura, invoca comer(id)
         # y libera los tenedores:
+                
+        # Estrategia asimétrica para romper la espera circular (Prevención de Deadlock)
+        if id % 2:
+            with tenedores[tenedor_der]:
+                with tenedores[tenedor_izq]:
+                    comer(id)
+        else:
+            with tenedores[tenedor_izq]:
+                with tenedores[tenedor_der]:
+                    comer(id)
         pass
         # =========================================================================
         # FIN TODO

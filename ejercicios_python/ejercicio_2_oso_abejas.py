@@ -28,9 +28,9 @@ simulacion_activa = True
 # - Un cerrojo (Lock) o semáforo binario para exclusión mutua en el tarro.
 # - Un semáforo para despertar al oso cuando el tarro esté lleno.
 # - Un semáforo para que las abejas esperen si el tarro está lleno o el oso está comiendo.
-# mutex = threading.Lock()
-# sem_oso = threading.Semaphore(0)
-# sem_tarro_disponible = threading.Semaphore(1)
+mutex = threading.Lock()
+sem_oso = threading.Semaphore(0)
+sem_tarro_disponible = threading.Semaphore(1)
 
 def abeja(id_abeja):
     global tarro_miel, simulacion_activa
@@ -43,6 +43,14 @@ def abeja(id_abeja):
         # 3. Depositar una porción de miel (tarro_miel += 1).
         # 4. Si tarro_miel == M, avisar/despertar al oso dormido.
         # 5. Si no está lleno, permitir que otras abejas sigan produciendo.
+      
+        sem_tarro_disponible.acquire()
+        with mutex:
+            tarro_miel += 1
+            if tarro_miel == M:
+                sem_oso.release()
+            else:
+                sem_tarro_disponible.release()
         pass
 
 def oso(max_tarros=2):
@@ -57,6 +65,11 @@ def oso(max_tarros=2):
         # 3. Incrementar tarros_comidos += 1.
         # 4. Avisar a las abejas que el tarro está vacío y disponible (sem_tarro_disponible.release()).
         # =====================================================================
+        sem_oso.acquire()
+        with mutex:
+            tarro_miel =0
+            tarros_comidos += 1
+            sem_tarro_disponible.release()
         pass
         time.sleep(0.05)
         break  # Evita bucle infinito si el alumno no implementó el TODO
@@ -68,5 +81,13 @@ if __name__ == "__main__":
     print(" Iniciando Simulación: El Oso y las Abejas (UNJu FI)")
     print("=" * 60)
     # TODO: Crear e iniciar los hilos para el oso y las N abejas
+    hilo_oso = threading.Thread(target=oso, args=(2,))
+    hilo_oso.start()
+    hilos_abejas = []
+    for i in range(1, NUM_ABEJAS + 1):
+        h = threading.Thread(target=abeja, args=(i,))
+        hilos_abejas.append(h)
+        h.start()
+    hilo_oso.join()
     pass
 
